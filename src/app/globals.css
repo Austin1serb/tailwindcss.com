@@ -9,7 +9,6 @@
   --font-mono: var(--font-plex-mono);
   --font-mono--font-feature-settings: "ss02", "zero";
   --font-ubuntu-mono: var(--font-ubuntu-mono);
-  --animate-fade-in: fade-in 300ms forwards;
 }
 
 @theme {
@@ -89,19 +88,5 @@
         display: none;
       }
     }
-  }
-}
-
-/* Tooltip variant required by Zero-UI. Zero-UI's build step normally generates this. */
-@custom-variant tooltip-on ([data-tooltip="on"] &);
-
-@keyframes fade-in {
-  0%,
-  30% {
-    opacity: 0;
-  }
-
-  100% {
-    opacity: 1;
   }
 }
