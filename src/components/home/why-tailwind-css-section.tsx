@@ -383,7 +383,7 @@ export default function WhyTailwindCssSection() {
                 </BentoDescription>
               </div>
             </BentoHeader>
-            <BentoBody className="h-112">
+            <BentoBody className="h-112 border border-red-500">
               {(() => {
                 let colors = [
                   "red",
@@ -421,6 +421,7 @@ export default function WhyTailwindCssSection() {
                   <div className="mt-8 -mr-16 -mb-16 sm:mt-0">
                     <div
                       className="group grid grid-cols-[repeat(var(--columns),var(--width))] gap-1.5 [--height:--spacing(6)] [--width:--spacing(10)] sm:[--height:--spacing(10)] sm:[--width:--spacing(16)]"
+                      data-tooltip-clamp
                       style={
                         {
                           "--sin": sin,
