@@ -44,6 +44,8 @@ import responsive4 from "./why-tailwind-css-section/responsive-4.png";
 import responsive5 from "./why-tailwind-css-section/responsive-5.png";
 import { ColorTooltip } from "./color-tooltip";
 
+import { ColorTooltipHit } from "./color-tooltip-hit";
+
 export default function WhyTailwindCssSection() {
   return (
     <div className="relative max-w-full">
@@ -261,6 +263,8 @@ export default function WhyTailwindCssSection() {
 
           <BentoItem className="col-span-full md:col-span-15">
             <BentoHeader>
+              {" "}
+              *
               <BentoIcon>
                 <FiltersIcon />
               </BentoIcon>
@@ -274,7 +278,14 @@ export default function WhyTailwindCssSection() {
             </BentoHeader>
             <BentoBody className="h-112" padding={false}>
               <div className="@container relative flex size-full items-center justify-center">
-                <Autoscroll className="no-scrollbar z-10 -my-1 flex snap-x snap-mandatory gap-(--gap) overflow-x-auto py-1 [--gap:--spacing(10)] [--size:--spacing(72)]">
+                {/* ------------------------------------ */}
+
+                {/* ------------------------------------ */}
+
+                {/* ------------------------------------ */}
+
+                {/* <Autoscroll className="no-scrollbar z-10 -my-1 flex snap-x snap-mandatory gap-(--gap) overflow-x-auto py-1 [--gap:--spacing(10)] [--size:--spacing(72)]"> */}
+                <div className="no-scrollbar z-10 -my-1 flex snap-x snap-mandatory gap-(--gap) overflow-x-auto py-1 [--gap:--spacing(10)] [--size:--spacing(72)]">
                   <div className="flex snap-proximity snap-end">
                     <div className="w-[calc(50cqw-(var(--size)/2)-(var(--gap)))]" />
                   </div>
@@ -300,7 +311,14 @@ export default function WhyTailwindCssSection() {
                   <div className="flex snap-proximity snap-end">
                     <div className="w-[calc(50cqw-(var(--size)/2)-(var(--gap)))]" />
                   </div>
-                </Autoscroll>
+                </div>
+                {/* </Autoscroll> */}
+
+                {/* ------------------------------------ */}
+
+                {/* ------------------------------------ */}
+
+                {/* ------------------------------------ */}
 
                 <div className="absolute inset-0 mt-8 flex items-center justify-center">
                   <img alt="" src={filtersImg.src} className="size-64 inset-ring inset-ring-gray-950/10" />
@@ -383,7 +401,8 @@ export default function WhyTailwindCssSection() {
                 </BentoDescription>
               </div>
             </BentoHeader>
-            <BentoBody className="h-112 border border-red-500">
+            <BentoBody className="h-112 border border-red-500" data-tooltip-clamp>
+              <ColorTooltipHit />
               {(() => {
                 let colors = [
                   "red",
@@ -421,7 +440,6 @@ export default function WhyTailwindCssSection() {
                   <div className="mt-8 -mr-16 -mb-16 sm:mt-0">
                     <div
                       className="group grid grid-cols-[repeat(var(--columns),var(--width))] gap-1.5 [--height:--spacing(6)] [--width:--spacing(10)] sm:[--height:--spacing(10)] sm:[--width:--spacing(16)]"
-                      data-tooltip-clamp
                       style={
                         {
                           "--sin": sin,
@@ -455,12 +473,19 @@ export default function WhyTailwindCssSection() {
                             {colors.map((color) => {
                               let value = colorValues[`${color}-${shade}`];
                               return (
-                                <ColorTooltip
-                                  key={color}
-                                  color={`${color}-${shade}`}
-                                  tooltip={value}
-                                  shadeIdx={shadeIdx}
-                                />
+                                <ColorTooltip key={value} tooltip={value}>
+                                  {shadeIdx === 0 && (
+                                    <>
+                                      <div className="pointer-events-none absolute -top-1 -left-1 h-screen border-l border-gray-950/5 dark:border-white/10" />
+                                      <div className="pointer-events-none absolute -top-1 -left-1 h-16 origin-top-left translate-px rotate-225 border-l border-gray-950/5 sm:h-24 dark:border-white/10" />
+                                    </>
+                                  )}
+
+                                  <div
+                                    className="h-(--height) w-(--width) bg-(--color) inset-ring inset-ring-gray-950/10 transition-opacity group-hover:opacity-75 hover:opacity-100 dark:inset-ring-white/10"
+                                    style={{ "--color": `var(--color-${color}-${shade})` } as React.CSSProperties}
+                                  />
+                                </ColorTooltip>
                               );
                             })}
                           </Fragment>
@@ -538,7 +563,19 @@ export default function WhyTailwindCssSection() {
             </BentoHeader>
             <div className="grid h-112 gap-[inherit]">
               <BentoBody padding={false}>
-                <TransitionsSection />
+                {/* ------------------------------------ */}
+
+                {/* ------------------------------------ */}
+
+                {/* ------------------------------------ */}
+
+                {/* <TransitionsSection /> */}
+
+                {/* ------------------------------------ */}
+
+                {/* ------------------------------------ */}
+
+                {/* ------------------------------------ */}
               </BentoBody>
             </div>
           </BentoItem>
@@ -557,31 +594,7 @@ export default function WhyTailwindCssSection() {
             </BentoHeader>
             <BentoBody className="h-112">
               <div className="-mr-16 -mb-16">
-                <Editor>
-                  <HighlightedCode
-                    example={css`
-                      @layer theme, base, components, utilities;
-
-                      @layer theme {
-                        :root {
-                          /* Your theme variables */
-                        }
-                      }
-
-                      @layer base {
-                        /* Preflight styles */
-                      }
-
-                      @layer components {
-                        /* Your custom components */
-                      }
-
-                      @layer utilities {
-                        /* Your utility classes */
-                      }
-                    `}
-                  />
-                </Editor>
+                <Editor>s</Editor>
               </div>
             </BentoBody>
           </BentoItem>
