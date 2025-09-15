@@ -22,21 +22,6 @@ export function ColorTooltip({ color, tooltip, shadeIdx }: { color: string; tool
     // Show tooltip
     tooltip.dataset.show = "true";
 
-    disposables.addEventListener(
-      window,
-      "scroll",
-      () => {
-        tooltip.dataset.show = "false";
-        console.log("scroll");
-      },
-      { passive: true },
-    );
-
-    disposables.addEventListener(window, "resize", () => {
-      tooltip.dataset.show = "false";
-      console.log("resize");
-    });
-
     // Find the clamping container
     const clampContainer = swatch.closest("[data-tooltip-clamp]");
     if (!clampContainer) return;
@@ -72,16 +57,10 @@ export function ColorTooltip({ color, tooltip, shadeIdx }: { color: string; tool
     if (tooltip) {
       tooltip.dataset.show = "false";
     }
-    disposables.dispose();
   };
 
   return (
-    <div
-      ref={swatchRef}
-      className="group/swatch relative"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
+    <div ref={swatchRef} className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       {shadeIdx === 0 && (
         <>
           <div className="pointer-events-none absolute -top-1 -left-1 h-screen border-l border-gray-950/5 dark:border-white/10" />
