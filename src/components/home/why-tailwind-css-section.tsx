@@ -44,7 +44,8 @@ import responsive4 from "./why-tailwind-css-section/responsive-4.png";
 import responsive5 from "./why-tailwind-css-section/responsive-5.png";
 import { ColorTooltip } from "./color-tooltip";
 
-import { ColorTooltipHit } from "./color-tooltip-hit";
+import { TooltipController } from "./color-tooltip-hit";
+import { ColorTooltipHit } from "./color-tooltip-hit-motion";
 
 export default function WhyTailwindCssSection() {
   return (
@@ -401,8 +402,10 @@ export default function WhyTailwindCssSection() {
                 </BentoDescription>
               </div>
             </BentoHeader>
-            <BentoBody className="h-112 border border-red-500" data-tooltip-clamp>
-              <ColorTooltipHit />
+            {/* data-tooltip-clamp is used to clamp the tooltip scroll logic from firing only in the container */}
+            <BentoBody className="relatives h-112 border border-red-500" data-tooltip-container>
+              {/* <ColorTooltipHit /> */}
+              <TooltipController />
               {(() => {
                 let colors = [
                   "red",
@@ -473,7 +476,12 @@ export default function WhyTailwindCssSection() {
                             {colors.map((color) => {
                               let value = colorValues[`${color}-${shade}`];
                               return (
-                                <ColorTooltip key={value} tooltip={value}>
+                                <div
+                                  key={value}
+                                  data-tooltip-trigger
+                                  data-tooltip-content={value} // <- tooltip text here
+                                  className="group relative"
+                                >
                                   {shadeIdx === 0 && (
                                     <>
                                       <div className="pointer-events-none absolute -top-1 -left-1 h-screen border-l border-gray-950/5 dark:border-white/10" />
@@ -482,10 +490,10 @@ export default function WhyTailwindCssSection() {
                                   )}
 
                                   <div
-                                    className="h-(--height) w-(--width) bg-(--color) inset-ring inset-ring-gray-950/10 transition-opacity group-hover:opacity-75 hover:opacity-100 dark:inset-ring-white/10"
+                                    className="h-(--height) w-(--width) bg-(--color) inset-ring inset-ring-gray-950/10 transition-opacity duration-100 group-hover:opacity-75 group-data-[vhover=true]:opacity-100 dark:inset-ring-white/10"
                                     style={{ "--color": `var(--color-${color}-${shade})` } as React.CSSProperties}
                                   />
-                                </ColorTooltip>
+                                </div>
                               );
                             })}
                           </Fragment>

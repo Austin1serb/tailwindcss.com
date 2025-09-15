@@ -13,13 +13,13 @@ export function ColorTooltip({ tooltip, children }: { tooltip: string; children:
   }, []);
 
   const handleMouseEnter = () => {
-    console.log("handleMouseEnter");
     const swatch = swatchRef.current;
     const tooltip = tooltipRef.current;
     if (!swatch || !tooltip) return;
 
     // Show tooltip on mouse enter
     tooltip.dataset.show = "true";
+    console.log("handleMouseEnter");
 
     const swatchRect = swatch.getBoundingClientRect();
     const tooltipWidth = tooltip.offsetWidth;
@@ -53,7 +53,13 @@ export function ColorTooltip({ tooltip, children }: { tooltip: string; children:
   };
 
   return (
-    <div ref={swatchRef} className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <div
+      ref={swatchRef}
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      data-tooltip-swatch
+    >
       {children}
 
       {mounted &&
@@ -61,6 +67,7 @@ export function ColorTooltip({ tooltip, children }: { tooltip: string; children:
           <div
             ref={tooltipRef}
             data-show="false"
+            data-tooltip
             className="pointer-events-none absolute z-10 translate-y-2 rounded-full border border-gray-950 bg-gray-950/90 pt-0.5 pr-2 pb-1 pl-3 text-center font-mono text-xs/6 font-medium whitespace-nowrap text-white opacity-0 inset-ring inset-ring-white/10 data-[show=true]:opacity-100 data-[show=true]:transition-[opacity] data-[show=true]:delay-100 data-[show=true]:duration-200"
           >
             {tooltip}
