@@ -42,10 +42,8 @@ import responsive2 from "./why-tailwind-css-section/responsive-2.png";
 import responsive3 from "./why-tailwind-css-section/responsive-3.png";
 import responsive4 from "./why-tailwind-css-section/responsive-4.png";
 import responsive5 from "./why-tailwind-css-section/responsive-5.png";
-import { ColorTooltip } from "./color-tooltip";
 
-import { TooltipController } from "./color-tooltip-hit";
-import { ColorTooltipHit } from "./color-tooltip-hit-motion";
+import { InitTooltip } from "./color-tooltip-hit";
 
 export default function WhyTailwindCssSection() {
   return (
@@ -285,8 +283,7 @@ export default function WhyTailwindCssSection() {
 
                 {/* ------------------------------------ */}
 
-                {/* <Autoscroll className="no-scrollbar z-10 -my-1 flex snap-x snap-mandatory gap-(--gap) overflow-x-auto py-1 [--gap:--spacing(10)] [--size:--spacing(72)]"> */}
-                <div className="no-scrollbar z-10 -my-1 flex snap-x snap-mandatory gap-(--gap) overflow-x-auto py-1 [--gap:--spacing(10)] [--size:--spacing(72)]">
+                <Autoscroll className="no-scrollbar z-10 -my-1 flex snap-x snap-mandatory gap-(--gap) overflow-x-auto py-1 [--gap:--spacing(10)] [--size:--spacing(72)]">
                   <div className="flex snap-proximity snap-end">
                     <div className="w-[calc(50cqw-(var(--size)/2)-(var(--gap)))]" />
                   </div>
@@ -312,8 +309,7 @@ export default function WhyTailwindCssSection() {
                   <div className="flex snap-proximity snap-end">
                     <div className="w-[calc(50cqw-(var(--size)/2)-(var(--gap)))]" />
                   </div>
-                </div>
-                {/* </Autoscroll> */}
+                </Autoscroll>
 
                 {/* ------------------------------------ */}
 
@@ -403,9 +399,9 @@ export default function WhyTailwindCssSection() {
               </div>
             </BentoHeader>
             {/* data-tooltip-clamp is used to clamp the tooltip scroll logic from firing only in the container */}
-            <BentoBody className="relatives h-112 border border-red-500" data-tooltip-container>
+            <BentoBody className="relative h-112">
               {/* <ColorTooltipHit /> */}
-              <TooltipController />
+              <InitTooltip />
               {(() => {
                 let colors = [
                   "red",
@@ -490,7 +486,7 @@ export default function WhyTailwindCssSection() {
                                   )}
 
                                   <div
-                                    className="h-(--height) w-(--width) bg-(--color) inset-ring inset-ring-gray-950/10 transition-opacity duration-100 group-hover:opacity-75 group-data-[vhover=true]:opacity-100 dark:inset-ring-white/10"
+                                    className="h-(--height) w-(--width) bg-(--color) inset-ring inset-ring-gray-950/10 transition-opacity duration-100 group-hover:opacity-75 group-data-[tooltip-hover=true]:opacity-100 dark:inset-ring-white/10"
                                     style={{ "--color": `var(--color-${color}-${shade})` } as React.CSSProperties}
                                   />
                                 </div>
@@ -577,7 +573,7 @@ export default function WhyTailwindCssSection() {
 
                 {/* ------------------------------------ */}
 
-                {/* <TransitionsSection /> */}
+                <TransitionsSection />
 
                 {/* ------------------------------------ */}
 

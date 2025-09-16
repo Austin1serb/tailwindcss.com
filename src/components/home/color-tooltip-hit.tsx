@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 interface TooltipOptions {
   offset?: number;
   padding?: number;
+  marginTop?: number;
   className?: string;
   disableOnTouch?: boolean;
 }
@@ -15,20 +16,22 @@ type State = {
   active: HTMLElement | null;
   tooltip: HTMLDivElement | null;
   rafId: number;
-  container: HTMLElement | null;
-  observer: IntersectionObserver | null;
-  containerVisible: boolean;
 };
 
 /**
- * Tooltip controller using event delegation and RAF-throttled scroll handling.
- * Addresses Chrome/Safari 100ms delay on mouseenter/leave during scroll.
- * @see https://groups.google.com/a/chromium.org/g/blink-dev/c/KIoVljZw5fc/
+ * Minimal listeners: pointermove + scroll (+ pointerleave fail-safe).
+ * Coalesces work via rAF and positions with transforms.
+ ** Address Chrome/Safari delay mouseEvents on scroll using elementFromPoint.
+ * ISSUE:
+ * @see https://codereview.chromium.org/1157303006/
+ * // proposed usage by Chrome team:
+ * @see https://groups.google.com/a/chromium.org/g/blink-dev/c/KIoVljZw5fc/#:~:text=In%20the%20interim,an%20API%20natively.
+
  */
-export function TooltipController({
-  offset = 24,
+export function InitTooltip({
   padding = 6,
-  className = "pointer-events-none absolute z-10 top-0 left-0 rounded-full border border-gray-950 bg-gray-950/90 py-0.5 pr-2 pb-1 pl-3 text-center font-mono text-xs/6 font-medium whitespace-nowrap text-white opacity-0 inset-ring inset-ring-white/10 data-[show]:opacity-100 data-[show]:transition-opacity data-[show]:duration-200 data-[show]:delay-100 will-change-[transform,opacity]",
+  marginTop = 110, // header height + trigger height + translate-y-6
+  className = "pointer-events-none -translate-y-6 absolute z-10 top-0 left-0 rounded-full border border-gray-950 bg-gray-950/90 py-0.5 pr-2 pb-1 pl-3 text-center font-mono text-xs/6 font-medium whitespace-nowrap text-white opacity-0 inset-ring inset-ring-white/10 data-[show]:opacity-100 data-[show]:transition-opacity data-[show]:duration-200 data-[show]:delay-100 will-change-[transform,opacity]",
   disableOnTouch = true,
 }: TooltipOptions = {}) {
   const stateRef = useRef<State>({
@@ -37,20 +40,15 @@ export function TooltipController({
     active: null,
     tooltip: null,
     rafId: 0,
-    container: null,
-    observer: null,
-    containerVisible: false,
   });
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const state = stateRef.current;
 
-    // Check if device has coarse pointer (touch)
-    const isTouchDevice = disableOnTouch && window.matchMedia("(pointer: coarse)").matches;
-    // Exit early on touch devices
-    if (isTouchDevice) {
-      return;
-    }
+    // Exit early on coarse pointers if requested
+    if (disableOnTouch && window.matchMedia("(pointer: coarse)").matches) return;
 
     // Create tooltip element once
     const tooltip = document.createElement("div");
@@ -59,129 +57,73 @@ export function TooltipController({
     tooltip.style.cssText = "position:absolute;pointer-events:none;";
     tooltip.setAttribute("role", "tooltip");
     tooltip.setAttribute("aria-hidden", "true");
+    // set in DOM
     document.body.appendChild(tooltip);
+    // set in state
     state.tooltip = tooltip;
+    // fallback to body
 
-    // Position tooltip relative to trigger
     const position = (trigger: HTMLElement) => {
-      const el = tooltip;
+      const el = state.tooltip;
       if (!el) return;
 
       const content = trigger.getAttribute("data-tooltip-content");
       if (!content) return;
 
-      // Set text first to measure
+      // Set text first to measure intrinsic width
       el.textContent = content;
 
-      const r = trigger.getBoundingClientRect();
-      const sx = window.pageXOffset;
-      const sy = window.pageYOffset;
+      const rect = trigger.getBoundingClientRect();
+      const sx = window.scrollX;
+      const sy = window.scrollY; // header height
 
-      const w = el.offsetWidth;
+      // width is not stable: min and max x calculations necessary
+      const tipWidth = el.offsetWidth;
       const minX = sx + padding;
-      const maxX = sx + window.innerWidth - padding - w;
+      const maxX = sx + window.innerWidth - padding - tipWidth;
 
-      // Center above
-      let left = r.left + sx + r.width / 2 - w / 2;
+      // Center above trigger
+      let left = rect.left + sx + rect.width / 2 - tipWidth / 2;
       if (left < minX) left = minX;
       if (left > maxX) left = maxX;
 
-      // Prefer above; flip below if clipped
-      let top = r.top + sy - offset;
-      if (top < sy + padding) {
-        top = r.bottom + sy + 8; // small gap below
+      // Prefer above; flip below if clipped (account for topbar)
+      let top = rect.top + sy;
+      if (top < sy + marginTop) {
+        // offset height is stable after the first render
+        top = rect.bottom + sy + el.offsetHeight + padding;
       }
 
       el.style.transform = `translate3d(${left}px, ${top}px, 0)`;
     };
 
-    // Show tooltip for trigger
-    const show = (trigger: HTMLElement) => {
-      if (trigger === state.active || !state.containerVisible) return;
-
-      hide();
-      state.active = trigger;
-      trigger.dataset.vhover = "true";
-
-      if (state.tooltip) {
-        state.tooltip.removeAttribute("data-show");
-        position(trigger);
-        void state.tooltip.offsetWidth; // Force reflow
-        state.tooltip.setAttribute("data-show", "");
-      }
-    };
-
-    // Hide current tooltip
     const hide = () => {
       if (state.active) {
-        delete state.active.dataset.vhover;
+        delete state.active.dataset.tooltipHover;
         state.active = null;
       }
       state.tooltip?.removeAttribute("data-show");
     };
 
-    // Find container and set up observer
-    const setupContainer = () => {
-      state.container = document.querySelector("[data-tooltip-container]");
+    const show = (trigger: HTMLElement) => {
+      // Swap active
+      hide();
+      trigger.dataset.tooltipHover = "true";
+      state.active = trigger;
 
-      if (state.container) {
-        state.observer = new IntersectionObserver(
-          ([entry]) => {
-            const wasVisible = state.containerVisible;
-            state.containerVisible = entry.isIntersecting;
-
-            if (state.containerVisible && !wasVisible) {
-              attachListeners();
-            } else if (!state.containerVisible && wasVisible) {
-              detachListeners();
-              hide();
-            }
-          },
-          { threshold: 0 },
-        );
-        state.observer.observe(state.container);
-      } else {
-        // If no container specified, always attach listeners
-        state.containerVisible = true;
-        attachListeners();
+      if (state.tooltip) {
+        state.tooltip.removeAttribute("data-show");
+        position(trigger);
+        state.tooltip.setAttribute("data-show", "");
       }
     };
-
-    // Universal RAF-throttled update system
-    const scheduleUpdate = (updateFn: () => void) => {
+    const scheduleUpdate = () => {
       if (state.rafId) cancelAnimationFrame(state.rafId);
       state.rafId = requestAnimationFrame(() => {
         state.rafId = 0;
-        updateFn();
-      });
-    };
-    // Event handlers - all RAF throttled for performance
-    const handlePointerMove = (e: PointerEvent) => {
-      state.mouseX = e.clientX;
-      state.mouseY = e.clientY;
-    };
 
-    const handlePointerOver = (e: PointerEvent) => {
-      const target = (e.target as Element)?.closest("[data-tooltip-trigger]") as HTMLElement | null;
-      if (!target || target === state.active) return;
-      scheduleUpdate(() => show(target));
-    };
-
-    const handlePointerOut = (e: PointerEvent) => {
-      const from = (e.target as Element)?.closest("[data-tooltip-trigger]") as HTMLElement | null;
-      if (!from) return;
-      const to = e.relatedTarget as Element | null;
-      // still within the same trigger (moving over children) → ignore
-      if (to && from.contains(to)) return;
-      // moving to another trigger will be handled by pointerover → just hide current
-      scheduleUpdate(() => hide());
-    };
-
-    const handleScroll = () => {
-      scheduleUpdate(() => {
-        // Check what's under the mouse during scroll
         const el = document.elementFromPoint(state.mouseX, state.mouseY) as HTMLElement | null;
-        const trigger = el?.closest("[data-tooltip-trigger]") as HTMLElement | null;
+        let trigger = el?.closest("[data-tooltip-trigger]") as HTMLElement | null;
 
         if (trigger !== state.active) {
           trigger ? show(trigger) : hide();
@@ -189,54 +131,38 @@ export function TooltipController({
       });
     };
 
-    // Listener management
-    const options = { passive: true, capture: true };
-    const attachListeners = () => {
-      window.addEventListener("pointermove", handlePointerMove, { passive: true });
-      document.addEventListener("pointerover", handlePointerOver, options);
-      document.addEventListener("pointerout", handlePointerOut, options);
-      window.addEventListener("scroll", handleScroll, options);
+    const handlePointerMove = (e: PointerEvent) => {
+      state.mouseX = e.clientX;
+      state.mouseY = e.clientY;
+      scheduleUpdate();
     };
 
-    const detachListeners = () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      document.removeEventListener("pointerover", handlePointerOver);
-      document.removeEventListener("pointerout", handlePointerOut);
-      window.removeEventListener("scroll", handleScroll);
-    };
+    const handleScroll = () => scheduleUpdate();
 
-    // Setup
-    setupContainer();
+    const handlePointerLeave = () => hide();
 
-    // Cleanup
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    document.addEventListener("pointerleave", handlePointerLeave, { passive: true });
+
     return () => {
-      detachListeners();
       if (state.rafId) cancelAnimationFrame(state.rafId);
-
-      state.observer?.disconnect();
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerleave", handlePointerLeave);
       state.tooltip?.remove();
     };
-  }, [className, offset, padding]);
+  }, [className, padding, marginTop, disableOnTouch]);
 
   return null;
 }
 
 /**
- * Usage example:
- *
- * // In your layout or page component:
- * <TooltipController />
- *
- * // Add container attribute to your tooltip area:
- * <div data-tooltip-container>
- *   {shades.map((shade, shadeIdx) => (
- *     <div
- *       data-tooltip-trigger
- *       data-tooltip-content="oklch(50.8% 0.118 165.612)"
- *       className="group"
- *     >
- *       <div className="... group-data-[vhover]:opacity-100" />
- *     </div>
- *   ))}
+ * Usage:
+ * <InitTooltip />
+ * <div
+ * data-tooltip-trigger
+ * data-tooltip-content="Hello!">
+ * {children}
  * </div>
  */
