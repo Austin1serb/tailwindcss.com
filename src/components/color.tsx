@@ -299,40 +299,41 @@ export function Color({ name, shade, value }: { name: string; shade: string; val
 
   let colorVariableName = `--color-${name}-${shade}`;
   let hexValue = hexColors[name]?.[shade];
+  const [tooltipContent, setTooltipContent] = useState<string>(useShift && hexValue ? hexValue : value);
 
   function copyHexToClipboard(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
 
-    let panel = panelRef.current;
-    if (!panel) return;
-
-    let prevValue = panel.innerHTML;
     if (e.shiftKey) {
       navigator.clipboard.writeText(hexColors[name][shade]);
-      panel.innerHTML = "Copied hex value!";
+      setTooltipContent("Copied hex value!");
     } else {
       navigator.clipboard.writeText(value);
-      panel.innerHTML = "Copied to clipboard!";
+      setTooltipContent("Copied to clipboard!");
     }
+
     setTimeout(() => {
-      panel.innerHTML = prevValue;
+      setTooltipContent(""); // Reset to default
     }, 1300);
   }
 
   return (
-    <Tooltip as="div" showDelayMs={100} hideDelayMs={0} className="contents">
-      <TooltipTrigger>
-        <Button
-          type="button"
-          onClick={copyHexToClipboard}
-          style={{ backgroundColor: `var(${colorVariableName})` }}
-          className={clsx(
-            "aspect-1/1 w-full rounded-sm outline -outline-offset-1 outline-black/10 sm:rounded-md dark:outline-white/10",
-          )}
-        />
-      </TooltipTrigger>
-      <TooltipPanel
+    <div className="contents group">
+      <div
+        ref={(panel) => {
+          if (panel) panelRef.current = panel;
+        }}
+        data-tooltip-trigger
+        data-tooltip-content={tooltipContent}
+        onClick={copyHexToClipboard}
+        style={{ backgroundColor: `var(${colorVariableName})` }}
+        className={clsx(
+          "aspect-1/1 w-full rounded-sm outline -outline-offset-1 outline-black/10 sm:rounded-md dark:outline-white/10 data-[tooltip-hover=true]:opacity-100 group-hover:opacity-70 duration-200",
+        )}
+      />
+
+      {/* <TooltipPanel
         as="div"
         anchor="top"
         className="pointer-events-none z-10 flex translate-y-2 items-center gap-1 rounded-full border border-gray-950 bg-gray-950/90 py-0.5 pr-2 pb-1 pl-3 text-center font-mono text-xs/6 font-medium whitespace-nowrap text-white opacity-100 inset-ring inset-ring-white/10 transition-[opacity] starting:opacity-0"
@@ -344,8 +345,8 @@ export function Color({ name, shade, value }: { name: string; shade: string; val
         >
           {useShift && hexValue ? hexValue : value}
         </span>
-      </TooltipPanel>
-    </Tooltip>
+      </TooltipPanel> */}
+    </div>
   );
 }
 

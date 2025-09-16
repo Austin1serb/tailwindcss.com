@@ -7,7 +7,8 @@ interface TooltipOptions {
   padding?: number;
   marginTop?: number;
   className?: string;
-  disableOnTouch?: boolean;
+  disableOnTouchDevice?: boolean;
+  offsetY?: number;
 }
 
 type State = {
@@ -30,9 +31,10 @@ type State = {
  */
 export function InitTooltip({
   padding = 6,
-  marginTop = 110, // header height + trigger height + translate-y-6
-  className = "pointer-events-none -translate-y-6 absolute z-10 top-0 left-0 rounded-full border border-gray-950 bg-gray-950/90 py-0.5 pr-2 pb-1 pl-3 text-center font-mono text-xs/6 font-medium whitespace-nowrap text-white opacity-0 inset-ring inset-ring-white/10 data-[show]:opacity-100 data-[show]:transition-opacity data-[show]:duration-200 data-[show]:delay-100 will-change-[transform,opacity]",
-  disableOnTouch = true,
+  marginTop = 86, // header height + trigger height
+  offsetY = -22, // negative = move up, positive = move down
+  className = "pointer-events-none absolute z-10 top-0 left-0 rounded-full border border-gray-950 bg-gray-950/90 py-0.5 pr-2 pb-1 pl-3 text-center font-mono text-xs/6 font-medium whitespace-nowrap text-white opacity-0 inset-ring inset-ring-white/10 data-[show]:opacity-100 data-[show]:transition-opacity data-[show]:duration-200 data-[show]:delay-100 will-change-[transform,opacity]",
+  disableOnTouchDevice = false,
 }: TooltipOptions = {}) {
   const stateRef = useRef<State>({
     mouseX: 0,
@@ -48,7 +50,7 @@ export function InitTooltip({
     const state = stateRef.current;
 
     // Exit early on coarse pointers if requested
-    if (disableOnTouch && window.matchMedia("(pointer: coarse)").matches) return;
+    if (disableOnTouchDevice && window.matchMedia("(pointer: coarse)").matches) return;
 
     // Create tooltip element once
     const tooltip = document.createElement("div");
@@ -73,28 +75,27 @@ export function InitTooltip({
       // Set text first to measure intrinsic width
       el.textContent = content;
 
-      const rect = trigger.getBoundingClientRect();
-      const sx = window.scrollX;
-      const sy = window.scrollY; // header height
+      const triggerRect = trigger.getBoundingClientRect();
+      const scrollX = window.scrollX;
+      const scrollY = window.scrollY; // header height
 
       // width is not stable: min and max x calculations necessary
       const tipWidth = el.offsetWidth;
-      const minX = sx + padding;
-      const maxX = sx + window.innerWidth - padding - tipWidth;
+      const minLeft = scrollX + padding;
+      const maxLeft = scrollX + window.innerWidth - padding - tipWidth;
 
       // Center above trigger
-      let left = rect.left + sx + rect.width / 2 - tipWidth / 2;
-      if (left < minX) left = minX;
-      if (left > maxX) left = maxX;
+      let xPosition = triggerRect.left + scrollX + triggerRect.width / 2 - tipWidth / 2;
+      xPosition = Math.max(minLeft, Math.min(xPosition, maxLeft));
 
-      // Prefer above; flip below if clipped (account for topbar)
-      let top = rect.top + sy;
-      if (top < sy + marginTop) {
+      // Prefer above; flip below if clipped (account for topbar w/ marginTop)
+      let yPosition = triggerRect.top + scrollY + offsetY;
+      if (yPosition < scrollY + marginTop) {
         // offset height is stable after the first render
-        top = rect.bottom + sy + el.offsetHeight + padding;
+        yPosition = triggerRect.bottom + scrollY + padding + offsetY;
       }
 
-      el.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+      el.style.transform = `translate3d(${xPosition}px, ${yPosition}px, 0)`;
     };
 
     const hide = () => {
@@ -152,7 +153,7 @@ export function InitTooltip({
       document.removeEventListener("pointerleave", handlePointerLeave);
       state.tooltip?.remove();
     };
-  }, [className, padding, marginTop, disableOnTouch]);
+  }, [className, padding, marginTop, disableOnTouchDevice, offsetY]);
 
   return null;
 }
@@ -163,6 +164,8 @@ export function InitTooltip({
  * <div
  * data-tooltip-trigger
  * data-tooltip-content="Hello!">
- * {children}
+ * <div className="data-[tooltip-hover=true]:bg-red-500"> // hover effects (use group-hover if element is nested)
+    {children}
+  </div>
  * </div>
  */

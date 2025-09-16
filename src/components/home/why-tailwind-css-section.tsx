@@ -401,7 +401,7 @@ export default function WhyTailwindCssSection() {
             {/* data-tooltip-clamp is used to clamp the tooltip scroll logic from firing only in the container */}
             <BentoBody className="relative h-112">
               {/* <ColorTooltipHit /> */}
-              <InitTooltip />
+              <InitTooltip disableOnTouchDevice={true} />
               {(() => {
                 let colors = [
                   "red",
