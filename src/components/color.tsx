@@ -1,8 +1,6 @@
 "use client";
-
 import { useEffect, useRef, useState } from "react";
-import clsx from "clsx";
-import { Button, Tooltip, TooltipPanel, TooltipTrigger } from "@headlessui/react";
+import { TooltipTrigger } from "./home/tooltip-trigger";
 
 const hexColors = {
   slate: {
@@ -294,59 +292,60 @@ const hexColors = {
 } as any;
 
 export function Color({ name, shade, value }: { name: string; shade: string; value: string }) {
-  let useShift = useShiftKey();
-  let panelRef = useRef<HTMLElement>(null);
+  const useShift = useShiftKey();
+  const panelRef = useRef<HTMLButtonElement>(null);
 
-  let colorVariableName = `--color-${name}-${shade}`;
-  let hexValue = hexColors[name]?.[shade];
-  const [tooltipContent, setTooltipContent] = useState<string>(useShift && hexValue ? hexValue : value);
+  const colorVariableName = `--color-${name}-${shade}`;
+  const hexValue = hexColors[name]?.[shade];
+  const [pending, setPending] = useState(false); // guard against multiple clicks
+
+  // Don't use state for tooltip content - update the DOM directly
+  const updateTooltipContent = (content: string) => {
+    if (panelRef.current) {
+      panelRef.current.setAttribute("data-tooltip-content", content);
+    }
+  };
+
+  // Update tooltip when shift key changes
+  useEffect(() => {
+    updateTooltipContent(useShift && hexValue ? hexValue : value);
+  }, [useShift, hexValue, value]);
 
   function copyHexToClipboard(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (e.shiftKey) {
-      navigator.clipboard.writeText(hexColors[name][shade]);
-      setTooltipContent("Copied hex value!");
+    if (e.shiftKey && hexValue) {
+      navigator.clipboard.writeText(hexValue);
+      updateTooltipContent("Copied hex value!");
+      setPending(true);
     } else {
       navigator.clipboard.writeText(value);
-      setTooltipContent("Copied to clipboard!");
+      updateTooltipContent("Copied to clipboard!");
+      setPending(true);
     }
 
     setTimeout(() => {
-      setTooltipContent(""); // Reset to default
-    }, 1300);
+      // Reset to current state
+      updateTooltipContent(useShift && hexValue ? hexValue : value);
+      setPending(false);
+    }, 1000);
   }
 
-  return (
-    <div className="contents group">
-      <div
-        ref={(panel) => {
-          if (panel) panelRef.current = panel;
-        }}
-        data-tooltip-trigger
-        data-tooltip-content={tooltipContent}
-        onClick={copyHexToClipboard}
-        style={{ backgroundColor: `var(${colorVariableName})` }}
-        className={clsx(
-          "aspect-1/1 w-full rounded-sm outline -outline-offset-1 outline-black/10 sm:rounded-md dark:outline-white/10 data-[tooltip-hover=true]:opacity-100 group-hover:opacity-70 duration-200",
-        )}
-      />
+  // Set initial content
+  const initialContent = useShift && hexValue ? hexValue : value;
 
-      {/* <TooltipPanel
-        as="div"
-        anchor="top"
-        className="pointer-events-none z-10 flex translate-y-2 items-center gap-1 rounded-full border border-gray-950 bg-gray-950/90 py-0.5 pr-2 pb-1 pl-3 text-center font-mono text-xs/6 font-medium whitespace-nowrap text-white opacity-100 inset-ring inset-ring-white/10 transition-[opacity] starting:opacity-0"
-      >
-        <span
-          ref={(panel) => {
-            if (panel) panelRef.current = panel;
-          }}
-        >
-          {useShift && hexValue ? hexValue : value}
-        </span>
-      </TooltipPanel> */}
-    </div>
+  return (
+    <TooltipTrigger
+      as="button"
+      content={initialContent}
+      aria-label="Copy color value"
+      ref={panelRef}
+      disabled={pending || false}
+      onClick={copyHexToClipboard}
+      style={{ backgroundColor: `var(${colorVariableName})` }}
+      className="aspect-1/1 w-full rounded-sm outline -outline-offset-1 outline-black/10 sm:rounded-md dark:outline-white/10 hover:scale-105 duration-200 disabled:opacity-75"
+    />
   );
 }
 

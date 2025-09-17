@@ -3,25 +3,40 @@
 import { useEffect, useRef } from "react";
 
 interface TooltipOptions {
-  offset?: number;
-  padding?: number;
+  /** Horizontal padding from edges of the screen */
+  paddingX?: number;
+  /** Top margin, accounts for header height */
   marginTop?: number;
+  /** Custom CSS classes to apply to the tooltip */
   className?: string;
+  /** Disable tooltip on touch devices */
   disableOnTouchDevice?: boolean;
+  /** Vertical offset (negative moves up, positive moves down) */
   offsetY?: number;
+  /** Vertical offset when tooltip is flipped below the trigger */
+  altPositionOffsetY?: number;
+  /** Whether tooltip content should update reactively */
+  reactiveContent?: boolean;
 }
 
-type State = {
+type TooltipState = {
+  /** The current x position of the mouse */
   mouseX: number;
+  /** The current y position of the mouse */
   mouseY: number;
+  /** The currently active tooltip trigger element */
   active: HTMLElement | null;
+  /** The tooltip element itself */
   tooltip: HTMLDivElement | null;
+  /** Request animation frame ID for batching updates */
   rafId: number;
+  /** Observer for watching tooltip content changes */
+  contentObserver: MutationObserver | null;
 };
 
 /**
  * Minimal listeners: pointermove + scroll (+ pointerleave fail-safe).
- * Coalesces work via rAF and positions with transforms.
+ * Coalesces work via rAF and positions with transform3D.
  ** Address Chrome/Safari delay mouseEvents on scroll using elementFromPoint.
  * ISSUE:
  * @see https://codereview.chromium.org/1157303006/
@@ -29,19 +44,32 @@ type State = {
  * @see https://groups.google.com/a/chromium.org/g/blink-dev/c/KIoVljZw5fc/#:~:text=In%20the%20interim,an%20API%20natively.
 
  */
-export function InitTooltip({
-  padding = 6,
-  marginTop = 86, // header height + trigger height
-  offsetY = -22, // negative = move up, positive = move down
+
+/**
+ * Global tooltip runtime that manages a single tooltip instance for the entire app.
+ * Uses event delegation and RAF batching for optimal performance.
+ * @performance
+ * - Single tooltip instance (no memory overhead)
+ * - 3 global listeners total (pointermove, scroll, pointerleave)
+ * - RAF-batched updates prevent layout thrashing
+ * - MutationObserver for reactive content updates
+ */
+export function TooltipRuntime({
+  paddingX = 6,
+  marginTop = 0,
+  offsetY = 0,
+  altPositionOffsetY = 0,
   className = "pointer-events-none absolute z-10 top-0 left-0 rounded-full border border-gray-950 bg-gray-950/90 py-0.5 pr-2 pb-1 pl-3 text-center font-mono text-xs/6 font-medium whitespace-nowrap text-white opacity-0 inset-ring inset-ring-white/10 data-[show]:opacity-100 data-[show]:transition-opacity data-[show]:duration-200 data-[show]:delay-100 will-change-[transform,opacity]",
   disableOnTouchDevice = false,
+  reactiveContent = true, // reactive by default
 }: TooltipOptions = {}) {
-  const stateRef = useRef<State>({
+  const stateRef = useRef<TooltipState>({
     mouseX: 0,
     mouseY: 0,
     active: null,
     tooltip: null,
     rafId: 0,
+    contentObserver: null,
   });
 
   useEffect(() => {
@@ -54,7 +82,7 @@ export function InitTooltip({
 
     // Create tooltip element once
     const tooltip = document.createElement("div");
-    tooltip.id = "v-tooltip";
+    tooltip.id = "_z-tooltip";
     tooltip.className = className;
     tooltip.style.cssText = "position:absolute;pointer-events:none;";
     tooltip.setAttribute("role", "tooltip");
@@ -63,8 +91,8 @@ export function InitTooltip({
     document.body.appendChild(tooltip);
     // set in state
     state.tooltip = tooltip;
-    // fallback to body
 
+    // Position tooltip relative to trigger with edge clamping
     const position = (trigger: HTMLElement) => {
       const el = state.tooltip;
       if (!el) return;
@@ -77,12 +105,12 @@ export function InitTooltip({
 
       const triggerRect = trigger.getBoundingClientRect();
       const scrollX = window.scrollX;
-      const scrollY = window.scrollY; // header height
+      const scrollY = window.scrollY;
 
       // width is not stable: min and max x calculations necessary
       const tipWidth = el.offsetWidth;
-      const minLeft = scrollX + padding;
-      const maxLeft = scrollX + window.innerWidth - padding - tipWidth;
+      const minLeft = scrollX + paddingX;
+      const maxLeft = scrollX + window.innerWidth - paddingX - tipWidth;
 
       // Center above trigger
       let xPosition = triggerRect.left + scrollX + triggerRect.width / 2 - tipWidth / 2;
@@ -91,14 +119,20 @@ export function InitTooltip({
       // Prefer above; flip below if clipped (account for topbar w/ marginTop)
       let yPosition = triggerRect.top + scrollY + offsetY;
       if (yPosition < scrollY + marginTop) {
-        // offset height is stable after the first render
-        yPosition = triggerRect.bottom + scrollY + padding + offsetY;
+        // offset height is stable in this case
+        yPosition = triggerRect.bottom + scrollY + altPositionOffsetY;
       }
 
       el.style.transform = `translate3d(${xPosition}px, ${yPosition}px, 0)`;
     };
 
     const hide = () => {
+      // Disconnect observer when hiding
+      if (state.contentObserver) {
+        state.contentObserver.disconnect();
+        state.contentObserver = null;
+      }
+      // Remove active state
       if (state.active) {
         delete state.active.dataset.tooltipHover;
         state.active = null;
@@ -106,25 +140,41 @@ export function InitTooltip({
       state.tooltip?.removeAttribute("data-show");
     };
 
+    // Show tooltip for trigger and setup content observer
     const show = (trigger: HTMLElement) => {
-      // Swap active
+      // Swap active + clean up content observer
       hide();
       trigger.dataset.tooltipHover = "true";
       state.active = trigger;
 
       if (state.tooltip) {
-        state.tooltip.removeAttribute("data-show");
+        state.tooltip.removeAttribute("data-show"); // Essential!
         position(trigger);
         state.tooltip.setAttribute("data-show", "");
       }
+      // Attach observer ONLY to the active trigger
+      if (reactiveContent) {
+        state.contentObserver = new MutationObserver(() => {
+          // Only re-position if this trigger is still active
+          if (state.active === trigger) {
+            position(trigger);
+          }
+        });
+        state.contentObserver.observe(trigger, {
+          attributes: true,
+          attributeFilter: ["data-tooltip-content"],
+        });
+      }
     };
+
+    // RAF-batched check for tooltip trigger under cursor
     const scheduleUpdate = () => {
       if (state.rafId) cancelAnimationFrame(state.rafId);
       state.rafId = requestAnimationFrame(() => {
         state.rafId = 0;
 
         const el = document.elementFromPoint(state.mouseX, state.mouseY) as HTMLElement | null;
-        let trigger = el?.closest("[data-tooltip-trigger]") as HTMLElement | null;
+        const trigger = el?.closest("[data-tooltip-trigger]") as HTMLElement | null;
 
         if (trigger !== state.active) {
           trigger ? show(trigger) : hide();
@@ -135,7 +185,11 @@ export function InitTooltip({
     const handlePointerMove = (e: PointerEvent) => {
       state.mouseX = e.clientX;
       state.mouseY = e.clientY;
-      scheduleUpdate();
+
+      const target = e.target as Element;
+      if (state.active || target?.closest("[data-tooltip-trigger]")) {
+        scheduleUpdate(); // No parameter needed
+      }
     };
 
     const handleScroll = () => scheduleUpdate();
@@ -148,24 +202,38 @@ export function InitTooltip({
 
     return () => {
       if (state.rafId) cancelAnimationFrame(state.rafId);
+      if (state.contentObserver) state.contentObserver.disconnect();
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("pointermove", handlePointerMove);
       document.removeEventListener("pointerleave", handlePointerLeave);
       state.tooltip?.remove();
     };
-  }, [className, padding, marginTop, disableOnTouchDevice, offsetY]);
+  }, [className, paddingX, marginTop, disableOnTouchDevice, offsetY, altPositionOffsetY, reactiveContent]);
 
   return null;
 }
 
 /**
- * Usage:
- * <InitTooltip />
+ * @example
+ * // Add once at app root
+ * <TooltipRuntime />
+ *
+ * // Then use anywhere via data attributes
+ * <button data-tooltip-trigger data-tooltip-content="Save document">
+ *   <SaveIcon />
+ * </button>
+ *
+ * // Or with the TooltipTrigger component
+ * <TooltipTrigger content="Delete" as="button">
+ *   <TrashIcon />
+ * </TooltipTrigger>
+ *
+ * // Apply hover styles with data attribute selector
  * <div
- * data-tooltip-trigger
- * data-tooltip-content="Hello!">
- * <div className="data-[tooltip-hover=true]:bg-red-500"> // hover effects (use group-hover if element is nested)
-    {children}
-  </div>
+ *   data-tooltip-trigger
+ *   data-tooltip-content="Click me"
+ *   className="data-[tooltip-hover=true]:bg-blue-500"
+ * >
+ *   Hover me
  * </div>
  */

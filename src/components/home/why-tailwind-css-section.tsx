@@ -43,7 +43,7 @@ import responsive3 from "./why-tailwind-css-section/responsive-3.png";
 import responsive4 from "./why-tailwind-css-section/responsive-4.png";
 import responsive5 from "./why-tailwind-css-section/responsive-5.png";
 
-import { InitTooltip } from "./color-tooltip-hit";
+import { TooltipRuntime } from "./TooltipRuntime";
 
 export default function WhyTailwindCssSection() {
   return (
@@ -401,7 +401,13 @@ export default function WhyTailwindCssSection() {
             {/* data-tooltip-clamp is used to clamp the tooltip scroll logic from firing only in the container */}
             <BentoBody className="relative h-112">
               {/* <ColorTooltipHit /> */}
-              <InitTooltip disableOnTouchDevice={true} />
+              <TooltipRuntime
+                disableOnTouchDevice={true}
+                reactiveContent={false}
+                marginTop={86}
+                altPositionOffsetY={-18}
+                offsetY={-22}
+              />
               {(() => {
                 let colors = [
                   "red",

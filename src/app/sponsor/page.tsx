@@ -565,7 +565,7 @@ function PartnerPlans() {
                       : "bg-sky-400/25 text-sky-700 dark:text-sky-400",
                   )}
                 >
-                  {plan.remaining} {plan.remaining === 1 ? 'spot' : 'spots'} left
+                  {plan.remaining} {plan.remaining === 1 ? "spot" : "spots"} left
                 </p>
               )}
             </div>
@@ -579,7 +579,9 @@ function PartnerPlans() {
               </div>
 
               <DarkButtonLink className="max-sm:hidden xl:hidden" href={plan.url}>
-                {plan.name === "Partner" ? "Join waitlist" : `Become ${plan.name.toLowerCase().match(/^[aeiou]/i) ? "an" : "a"} ${plan.name.toLowerCase()}`}
+                {plan.name === "Partner"
+                  ? "Join waitlist"
+                  : `Become ${plan.name.toLowerCase().match(/^[aeiou]/i) ? "an" : "a"} ${plan.name.toLowerCase()}`}
               </DarkButtonLink>
             </div>
             <p className="max-w-2xl text-sm/7 text-gray-600 dark:text-gray-400">{plan.description}</p>
@@ -601,7 +603,9 @@ function PartnerPlans() {
               </ul>
             </div>
             <DarkButtonLink className="mt-auto sm:max-xl:hidden" href={plan.url}>
-              {plan.name === "Partner" ? "Join waitlist" : `Become ${plan.name.toLowerCase().match(/^[aeiou]/i) ? "an" : "a"} ${plan.name.toLowerCase()}`}
+              {plan.name === "Partner"
+                ? "Join waitlist"
+                : `Become ${plan.name.toLowerCase().match(/^[aeiou]/i) ? "an" : "a"} ${plan.name.toLowerCase()}`}
             </DarkButtonLink>
           </div>
         </div>
