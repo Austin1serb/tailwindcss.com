@@ -1,4 +1,5 @@
 import colorValues from "@/docs/utils/colors";
+import { Tooltip, TooltipPanel, TooltipTrigger } from "@headlessui/react";
 import { StarIcon } from "@heroicons/react/16/solid";
 import clsx from "clsx";
 import { CSSProperties, Fragment, ReactNode } from "react";
@@ -42,8 +43,6 @@ import responsive2 from "./why-tailwind-css-section/responsive-2.png";
 import responsive3 from "./why-tailwind-css-section/responsive-3.png";
 import responsive4 from "./why-tailwind-css-section/responsive-4.png";
 import responsive5 from "./why-tailwind-css-section/responsive-5.png";
-
-import { TooltipRuntime } from "./TooltipRuntime";
 
 export default function WhyTailwindCssSection() {
   return (
@@ -262,8 +261,6 @@ export default function WhyTailwindCssSection() {
 
           <BentoItem className="col-span-full md:col-span-15">
             <BentoHeader>
-              {" "}
-              *
               <BentoIcon>
                 <FiltersIcon />
               </BentoIcon>
@@ -277,12 +274,6 @@ export default function WhyTailwindCssSection() {
             </BentoHeader>
             <BentoBody className="h-112" padding={false}>
               <div className="@container relative flex size-full items-center justify-center">
-                {/* ------------------------------------ */}
-
-                {/* ------------------------------------ */}
-
-                {/* ------------------------------------ */}
-
                 <Autoscroll className="no-scrollbar z-10 -my-1 flex snap-x snap-mandatory gap-(--gap) overflow-x-auto py-1 [--gap:--spacing(10)] [--size:--spacing(72)]">
                   <div className="flex snap-proximity snap-end">
                     <div className="w-[calc(50cqw-(var(--size)/2)-(var(--gap)))]" />
@@ -310,12 +301,6 @@ export default function WhyTailwindCssSection() {
                     <div className="w-[calc(50cqw-(var(--size)/2)-(var(--gap)))]" />
                   </div>
                 </Autoscroll>
-
-                {/* ------------------------------------ */}
-
-                {/* ------------------------------------ */}
-
-                {/* ------------------------------------ */}
 
                 <div className="absolute inset-0 mt-8 flex items-center justify-center">
                   <img alt="" src={filtersImg.src} className="size-64 inset-ring inset-ring-gray-950/10" />
@@ -398,16 +383,7 @@ export default function WhyTailwindCssSection() {
                 </BentoDescription>
               </div>
             </BentoHeader>
-            {/* data-tooltip-clamp is used to clamp the tooltip scroll logic from firing only in the container */}
-            <BentoBody className="relative h-112">
-              {/* <ColorTooltipHit /> */}
-              <TooltipRuntime
-                disableOnTouchDevice={true}
-                reactiveContent={false}
-                marginTop={86}
-                altPositionOffsetY={-18}
-                offsetY={-22}
-              />
+            <BentoBody className="h-112">
               {(() => {
                 let colors = [
                   "red",
@@ -478,24 +454,28 @@ export default function WhyTailwindCssSection() {
                             {colors.map((color) => {
                               let value = colorValues[`${color}-${shade}`];
                               return (
-                                <div
-                                  key={value}
-                                  data-tooltip-trigger
-                                  data-tooltip-content={value} // <- tooltip text here
-                                  className="group relative"
-                                >
+                                <Tooltip as="div" key={color} showDelayMs={100} hideDelayMs={0} className="relative">
                                   {shadeIdx === 0 && (
                                     <>
-                                      <div className="pointer-events-none absolute -top-1 -left-1 h-screen border-l border-gray-950/5 dark:border-white/10" />
-                                      <div className="pointer-events-none absolute -top-1 -left-1 h-16 origin-top-left translate-px rotate-225 border-l border-gray-950/5 sm:h-24 dark:border-white/10" />
+                                      <div className="pointer-events-none absolute -top-1 -left-1 h-screen border-l border-gray-950/5 dark:border-white/10"></div>
+                                      <div className="pointer-events-none absolute -top-1 -left-1 h-16 origin-top-left translate-px rotate-225 border-l border-gray-950/5 sm:h-24 dark:border-white/10"></div>
                                     </>
                                   )}
 
-                                  <div
-                                    className="h-(--height) w-(--width) bg-(--color) inset-ring inset-ring-gray-950/10 transition-opacity duration-100 group-hover:opacity-75 group-data-[tooltip-hover=true]:opacity-100 dark:inset-ring-white/10"
-                                    style={{ "--color": `var(--color-${color}-${shade})` } as React.CSSProperties}
-                                  />
-                                </div>
+                                  <TooltipTrigger>
+                                    <div
+                                      style={{ "--color": `var(--color-${color}-${shade})` } as CSSProperties}
+                                      className="h-(--height) w-(--width) bg-(--color) inset-ring inset-ring-gray-950/10 transition-opacity group-hover:opacity-75 hover:opacity-100 dark:inset-ring-white/10"
+                                    />
+                                  </TooltipTrigger>
+                                  <TooltipPanel
+                                    as="div"
+                                    anchor="top"
+                                    className="pointer-events-none z-10 translate-y-2 rounded-full border border-gray-950 bg-gray-950/90 py-0.5 pr-2 pb-1 pl-3 text-center font-mono text-xs/6 font-medium whitespace-nowrap text-white opacity-100 inset-ring inset-ring-white/10 transition-[opacity] starting:opacity-0"
+                                  >
+                                    {value}
+                                  </TooltipPanel>
+                                </Tooltip>
                               );
                             })}
                           </Fragment>
@@ -573,19 +553,7 @@ export default function WhyTailwindCssSection() {
             </BentoHeader>
             <div className="grid h-112 gap-[inherit]">
               <BentoBody padding={false}>
-                {/* ------------------------------------ */}
-
-                {/* ------------------------------------ */}
-
-                {/* ------------------------------------ */}
-
                 <TransitionsSection />
-
-                {/* ------------------------------------ */}
-
-                {/* ------------------------------------ */}
-
-                {/* ------------------------------------ */}
               </BentoBody>
             </div>
           </BentoItem>
@@ -604,7 +572,31 @@ export default function WhyTailwindCssSection() {
             </BentoHeader>
             <BentoBody className="h-112">
               <div className="-mr-16 -mb-16">
-                <Editor>s</Editor>
+                <Editor>
+                  <HighlightedCode
+                    example={css`
+                      @layer theme, base, components, utilities;
+
+                      @layer theme {
+                        :root {
+                          /* Your theme variables */
+                        }
+                      }
+
+                      @layer base {
+                        /* Preflight styles */
+                      }
+
+                      @layer components {
+                        /* Your custom components */
+                      }
+
+                      @layer utilities {
+                        /* Your utility classes */
+                      }
+                    `}
+                  />
+                </Editor>
               </div>
             </BentoBody>
           </BentoItem>
