@@ -4,7 +4,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import React from "react";
 import { Color } from "./color";
-import { TooltipRuntime } from "./home/TooltipRuntime";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,8 +30,7 @@ for (let line of styles.split("\n")) {
 
 export function ColorPalette() {
   return (
-    <div className="not-prose grid grid-cols-[auto_minmax(0,_1fr)] items-center gap-4 border border-red-500 group">
-      <TooltipRuntime marginTop={170} disableOnTouchDevice={true} altPositionOffsetY={0} offsetY={-22} />
+    <div className="not-prose grid grid-cols-[auto_minmax(0,_1fr)] items-center gap-4">
       <div className="sticky top-28 z-9 bg-white lg:top-14 dark:bg-gray-950">&nbsp;</div>
       <div className="sticky top-28 z-9 col-start-2 grid grid-cols-11 justify-items-center gap-1.5 bg-white font-medium text-gray-950 *:rotate-180 *:[writing-mode:vertical-lr] max-sm:py-1 sm:gap-4 sm:*:rotate-0 sm:*:[writing-mode:horizontal-tb] lg:top-14 dark:bg-gray-950 dark:text-white">
         <div>50</div>

@@ -133,10 +133,8 @@ export function TooltipRuntime({
         state.contentObserver = null;
       }
       // Remove active state
-      if (state.active) {
-        delete state.active.dataset.tooltipHover;
-        state.active = null;
-      }
+      if (state.active) state.active = null;
+
       state.tooltip?.removeAttribute("data-show");
     };
 
@@ -144,7 +142,6 @@ export function TooltipRuntime({
     const show = (trigger: HTMLElement) => {
       // Swap active + clean up content observer
       hide();
-      trigger.dataset.tooltipHover = "true";
       state.active = trigger;
 
       if (state.tooltip) {
@@ -224,16 +221,7 @@ export function TooltipRuntime({
  * </button>
  *
  * // Or with the TooltipTrigger component
- * <TooltipTrigger content="Delete" as="button">
+ * <TooltipTrigger content="Delete item" as="button">
  *   <TrashIcon />
  * </TooltipTrigger>
- *
- * // Apply hover styles with data attribute selector
- * <div
- *   data-tooltip-trigger
- *   data-tooltip-content="Click me"
- *   className="data-[tooltip-hover=true]:bg-blue-500"
- * >
- *   Hover me
- * </div>
  */
