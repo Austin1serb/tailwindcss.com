@@ -42,8 +42,8 @@ import responsive2 from "./why-tailwind-css-section/responsive-2.png";
 import responsive3 from "./why-tailwind-css-section/responsive-3.png";
 import responsive4 from "./why-tailwind-css-section/responsive-4.png";
 import responsive5 from "./why-tailwind-css-section/responsive-5.png";
-
-import { TooltipRuntime } from "./TooltipRuntime";
+import { ColorTooltip } from "./color-tooltip";
+import { ColorTooltipHit } from "./color-tooltip-hit-motion";
 
 export default function WhyTailwindCssSection() {
   return (
@@ -400,14 +400,8 @@ export default function WhyTailwindCssSection() {
             </BentoHeader>
             {/* data-tooltip-clamp is used to clamp the tooltip scroll logic from firing only in the container */}
             <BentoBody className="relative h-112">
-              {/* <ColorTooltipHit /> */}
-              <TooltipRuntime
-                disableOnTouchDevice={true}
-                reactiveContent={false}
-                marginTop={86}
-                altPositionOffsetY={-18}
-                offsetY={-22}
-              />
+              <ColorTooltipHit />
+
               {(() => {
                 let colors = [
                   "red",
@@ -478,11 +472,11 @@ export default function WhyTailwindCssSection() {
                             {colors.map((color) => {
                               let value = colorValues[`${color}-${shade}`];
                               return (
-                                <div
+                                <ColorTooltip
+                                  tooltip={value}
                                   key={value}
                                   data-tooltip-trigger
                                   data-tooltip-content={value} // <- tooltip text here
-                                  className="group relative"
                                 >
                                   {shadeIdx === 0 && (
                                     <>
@@ -492,10 +486,10 @@ export default function WhyTailwindCssSection() {
                                   )}
 
                                   <div
-                                    className="h-(--height) w-(--width) bg-(--color) inset-ring inset-ring-gray-950/10 transition-opacity duration-100 group-hover:opacity-75 group-data-[tooltip-hover=true]:opacity-100 dark:inset-ring-white/10"
+                                    className="h-(--height) w-(--width) bg-(--color) inset-ring inset-ring-gray-950/10 transition-opacity duration-100 group-hover:opacity-75 hover:opacity-100 dark:inset-ring-white/10"
                                     style={{ "--color": `var(--color-${color}-${shade})` } as React.CSSProperties}
                                   />
-                                </div>
+                                </ColorTooltip>
                               );
                             })}
                           </Fragment>
